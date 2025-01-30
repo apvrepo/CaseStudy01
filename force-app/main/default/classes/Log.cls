@@ -1,3 +1,24 @@
+/* @Description:  A framework is a highly optimized, reusable structure that serves as a building block. 
+                 These building blocks provide common functionality that developers can override or 
+                 specialize for their own needs. Reusable frameworks increase the speed of development, 
+                 improve the clarity and efficiency of your code, and simplify code reviews and debugging. 
+                 Which framework you use depends on your situation. 
+				 Logging errors in a consistent, structured way supports debugging during the build phase 
+				 and after launch. Your framework should write debug entries to a custom object. 
+				 From there you can create workflow rules to send email notifications,
+				  create tasks, or create a ticket in an external system, when an error event occurs.
+
+More Info: https://trailhead.salesforce.com/content/learn/modules/success-cloud-coding-conventions/implement-frameworks-sc 
+
+SFDX-Trigger-Framework:  https://github.com/rsoesemann/apex-unified-logging
+
+*******************************************************************************************/
+/* MODIFICATION LOG
+* Version          Developer          Date               Description
+*-------------------------------------------------------------------------------------------
+*  1.0            Robert Sösemann                        Initial Creation                                                    
+*******************************************************************************************/
+
 public without sharing class Log {
 
 	private static final Boolean IS_ENABLED = isEnabled();

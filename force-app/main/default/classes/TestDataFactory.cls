@@ -1,4 +1,12 @@
-/* @Description  This is a Test Class that helps creating test data for the rest of Test Classes
+/* @Description:   A framework is a highly optimized, reusable structure that serves as a building block. 
+                 These building blocks provide common functionality that developers can override or 
+                 specialize for their own needs. Reusable frameworks increase the speed of development, 
+                 improve the clarity and efficiency of your code, and simplify code reviews and debugging. 
+                 Which framework you use depends on your situation.
+
+More Info:   https://trailhead.salesforce.com/content/learn/modules/success-cloud-coding-conventions/implement-frameworks-sc 
+            https://trailhead.salesforce.com/content/learn/modules/apex_testing/apex_testing_data
+
 *******************************************************************************************/
 /* MODIFICATION LOG
 * Version          Developer          Date               Description

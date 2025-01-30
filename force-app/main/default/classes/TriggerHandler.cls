@@ -1,3 +1,22 @@
+/* @Description:  A framework is a highly optimized, reusable structure that serves as a building block. 
+                 These building blocks provide common functionality that developers can override or 
+                 specialize for their own needs. Reusable frameworks increase the speed of development, 
+                 improve the clarity and efficiency of your code, and simplify code reviews and debugging. 
+                 Which framework you use depends on your situation. Having said that, Kevin O'Hara's 
+                 SFDC Trigger Framework is the one we generally prefer on large-scale projects 
+                 within the Success Cloud team at Salesforce.
+
+More Info: https://trailhead.salesforce.com/content/learn/modules/success-cloud-coding-conventions/implement-frameworks-sc 
+
+SFDX-Trigger-Framework:  https://github.com/kevinohara80/sfdc-trigger-framework
+
+*******************************************************************************************/
+/* MODIFICATION LOG
+* Version          Developer          Date               Description
+*-------------------------------------------------------------------------------------------
+*  1.0            Kevin O'Hara                        Initial Creation                                                    
+*******************************************************************************************/
+
 public virtual class TriggerHandler {
 
   // static map of handlername, times run() was invoked

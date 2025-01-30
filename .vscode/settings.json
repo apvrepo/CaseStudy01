@@ -4,5 +4,9 @@
     "**/bower_components": true,
     "**/.sfdx": true
   },
-  "vlocity.sfdxUsername": "apvicare@gmail.com"
+  "vlocity.sfdxUsername": "apvicare@gmail.com",
+  "[xml]": {
+  "editor.defaultFormatter": "redhat.vscode-xml",
+  "editor.tabSize": 2
+},
 }
