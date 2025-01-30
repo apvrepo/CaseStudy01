@@ -1,150 +1,103 @@
-# SFDC trigger framework
 
-[![npm version](https://badge.fury.io/js/sfdc-trigger-framework.svg)](https://badge.fury.io/js/sfdc-trigger-framework)
-[![Maintainability](https://api.codeclimate.com/v1/badges/eeeae5a492e34feace99/maintainability)](https://codeclimate.com/github/kevinohara80/sfdc-trigger-framework/maintainability)
+# Case Study 
 
-I know, I know...another trigger framework. Bear with me. ;)
+## Assignment Salesforce Developer
 
-## Overview
+## Requirements
 
-Triggers should (IMO) be logicless. Putting logic into your triggers creates un-testable, difficult-to-maintain code. It's widely accepted that a best-practice is to move trigger logic into a handler class.
+- In our Field Service implementation, when a ServiceTerritory is updated to IsActive =
+false, the related ServiceTerritoryMembers field EffectiveEndDate should be updated
+to yesterday (today’s date - 1).
 
-This trigger framework bundles a single **TriggerHandler** base class that you can inherit from in all of your trigger handlers. The base class includes context-specific methods that are automatically called when a trigger is executed.
+- Also whenever a ServiceTerritoryMember is created or updated, ensure that if it is a
+Secondary Territory Member (TerritoryType = ‘S’) it is created or updated within the
+existing Primary Territory Member (TerritoryType = ‘P’). This means that the
+Secondary Member EffectiveStartDate and EffectiveEndDate are validated against
+the Primary Territory Member.
 
-The base class also provides a secondary role as a supervisor for Trigger execution. It acts like a watchdog, monitoring trigger activity and providing an api for controlling certain aspects of execution and control flow.
+- If you save time, consider the case where we might have set multiple Primary
+ServiceTerritoryMembers, for example, 2 ServiceTerritoryMembers where the
+first ends at a certain date and the second one starts the day after and never
+ends.
+Come up with a solution to the above requirements using Apex (do not use Flows).
+Focus mainly on the structure of your code. Make use of design patterns where you find
+them useful. Organize your code as you think it is best for maintenance. Add unit tests.
+You will receive an email to get access to a Salesforce Org to work on the assignment.
 
-But the most important part of this framework is that it's minimal and simple to use. 
+## Assumptions:
 
-**Deploy to SFDX Scratch Org:**
-[![Deploy](https://deploy-to-sfdx.com/dist/assets/images/DeployToSFDX.svg)](https://deploy-to-sfdx.com)
+### About the First Point: 
+- The only ServiceTerritoryMember records that need to be updated are the ones related to the ServiceTerritory record that is being updated (Relationship via lookup field 'ServiceTerritoryId').
+- The update of the ServiceTerritoryMember records occurs after the update of the Service Territory record 
+- All the ServiceTerritoryMember records related to the ServiceTerritory record need to be updated despite the Territory Type (Primary or Secondary). 
+- The EffectiveStartDate of the ServiceTerritoryMember records also needs to be updated to avoid a Salesforce Validation Error: 'Failed Record Error: The Start Date must be earlier than the End Date'. 
 
-**Deploy to Salesforce Org:**
-[![Deploy](https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/deploy.png)](https://githubsfdeploy.herokuapp.com/?owner=kevinohara80&repo=sfdc-trigger-framework&ref=master)
+### About the Second Point: 
+- The validation for the creation or update of the ServiceTerritoryMember records does not look for the Active or Inactive state of the Service Territory related to them. 
+- Each Service Territory Member record related to the same Service Territory must have a different Service Resource assigned, otherwise a Salesforce validation is fired 'This service resource is already a member of the service territory at the same date and time. -  DUPLICATE_VALUE'. This assumption also prevents other Salesforce validation from being fired: 'Failed Record Error: This service resource is already assigned to another primary service territory during the same time. Change the territory type to Secondary, or adjust the dates of one of the territory memberships so the periods don't overlap.'
+- When the validation states:  'whenever a ServiceTerritoryMember is created or updated, ensure that if it is a Secondary Territory Member (TerritoryType = ‘S’) it is created or updated within the existing Primary Territory Member (TerritoryType = ‘P’)', it was interpreted as that the start and end date of the Secondary Service Territory must be equal or fall within the start and end dates of at least one Primary Service Territory Member related to the same Service Territory. 
+- The alternative case is where a second primary Service Territory Member has no End Date, in this case, if a secondary Service Territory Member record has a Start Date equal to or later than the special primary member then the secondary Service Territory Member passed validation.  
 
-## Usage
 
-To create a trigger handler, you simply need to create a class that inherits from **TriggerHandler.cls**. Here is an example for creating an Opportunity trigger handler.
+## DESIGN PATTERN USED: 
 
-```java
-public class OpportunityTriggerHandler extends TriggerHandler {
-```
+### 1. Facade Pattern:
+It is a structural design pattern that provides a simplified interface to a complex system. It essentially offers a high-level view and hides the complex workings of the subsystems.
 
-In your trigger handler, to add logic to any of the trigger contexts, you only need to override them in your trigger handler. Here is how we would add logic to a `beforeUpdate` trigger.
+Advantages of Facade Pattern:
 
-```java
-public class OpportunityTriggerHandler extends TriggerHandler {
-  
-  public override void beforeUpdate() {
-    for(Opportunity o : (List<Opportunity>) Trigger.new) {
-      // do something
-    }
-  }
+-Facade simplifies a complex system, providing an easy-to-use interface.
+-It hides intricate internal details, allowing users to interact at a higher level.
+-Users only need to work with a single, clear interface rather than multiple subsystems.
+-Developers can focus on their tasks without being overwhelmed by system complexity.
+-Changes to the internal subsystems can be managed within the facade, minimizing impact on users.
 
-  // add overrides for other contexts
+### 2. Bulk State Transition Pattern:
+It’s a behavioral design pattern to efficiently handle the transition of multiple records from one state to another. This pattern is particularly valuable when dealing with a significant number of records and needing to update or modify them collectively based on certain conditions or triggers. Instead of processing records one by one, process them in bulk minimizing the use of database operations and enhancing performance.
 
-}
-```
+Advantages of Bulk State Transition Pattern:
 
-**Note:** When referencing the Trigger statics within a class, SObjects are returned versus SObject subclasses like Opportunity, Account, etc. This means that you must cast when you reference them in your trigger handler. You could do this in your constructor if you wanted. 
+- Reduces database operations by processing records in bulk, improving performance.
+- Helps avoid hitting Salesforce's governor limits by minimizing DML and query operations.
+- Optimizes resource usage, reducing platform costs associated with excessive database actions.
+- Allows the system to handle a large volume of data and transactions efficiently.
+- Enhances code organization and readability, making it easier to manage and maintain.
 
-```java
-public class OpportunityTriggerHandler extends TriggerHandler {
+More Information:  https://www.linkedin.com/pulse/salesforce-apex-design-patterns-waqas-ali
 
-  private Map<Id, Opportunity> newOppMap;
+## FIELD SERVICE CORE DATA MODEL: 
 
-  public OpportunityTriggerHandler() {
-    this.newOppMap = (Map<Id, Opportunity>) Trigger.newMap;
-  }
-  
-  public override void afterUpdate() {
-    //
-  }
+![image](https://github.com/user-attachments/assets/578b6ea8-945a-4aba-a42e-25ecb02e5253)
 
-}
-```
 
-To use the trigger handler, you only need to construct an instance of your trigger handler within the trigger handler itself and call the `run()` method. Here is an example of the Opportunity trigger.
+More Information:  https://developer.salesforce.com/docs/atlas.en-us.field_service_dev.meta/field_service_dev/fsl_dev_soap_core.htm
 
-```java
-trigger OpportunityTrigger on Opportunity (before insert, before update) {
-  new OpportunityTriggerHandler().run();
-}
-```
+## SALESFORCE FRAMEWORK IMPLEMENTATION: 
 
-## Cool Stuff
+What Is a Framework?
+A framework is a highly optimized, reusable structure that serves as a building block. These building blocks provide common functionality that developers can override or specialize for their own needs. Reusable frameworks increase the speed of development, improve the clarity and efficiency of your code, and simplify code reviews and debugging. 
 
-### Max Loop Count
+Benefits of using Frameworks: 
+-Scalable, due to built-in bulkification.
+-Traceable, clearly showing what logic is executed, and when, for each record.
+-Reusable, because functional methods and classes are separated.
+-Atomic, allowing you to bypass specific triggers when needed.
+-Optimized, making minimal Salesforce Object Query Language (SOQL) calls, preventing recursion, and sharing result sets over the execution cycle. 
 
-To prevent recursion, you can set a max loop count for Trigger Handler. If this max is exceeded, and exception will be thrown. A great use case is when you want to ensure that your trigger runs once and only once within a single execution. Example:
+Frameworks used in the Assignment: 
 
-```java
-public class OpportunityTriggerHandler extends TriggerHandler {
+1. Trigger Handler Framework: [OK]
+More Information: https://github.com/kevinohara80/sfdc-trigger-framework
 
-  public OpportunityTriggerHandler() {
-    this.setMaxLoopCount(1);
-  }
-  
-  public override void afterUpdate() {
-    List<Opportunity> opps = [SELECT Id FROM Opportunity WHERE Id IN :Trigger.newMap.keySet()];
-    update opps; // this will throw after this update
-  }
+2. Test Data Factory: [OK]
+More Information: https://trailhead.salesforce.com/content/learn/modules/apex_testing/apex_testing_data
 
-}
-```
+3. Apex Unified Logging: [NOT FUNTIONAL]
+More Information: https://github.com/rsoesemann/apex-unified-logging
 
-### Bypass API
 
-What if you want to tell other trigger handlers to halt execution? That's easy with the bypass api:
+## SALESFORCE BEST PRACTICES: 
+More Information: 
+https://developer.salesforce.com/ja/wiki/apex_code_best_practices
 
-```java
-public class OpportunityTriggerHandler extends TriggerHandler {
-  
-  public override void afterUpdate() {
-    List<Opportunity> opps = [SELECT Id, AccountId FROM Opportunity WHERE Id IN :Trigger.newMap.keySet()];
-    
-    Account acc = [SELECT Id, Name FROM Account WHERE Id = :opps.get(0).AccountId];
-
-    TriggerHandler.bypass('AccountTriggerHandler');
-
-    acc.Name = 'No Trigger';
-    update acc; // won't invoke the AccountTriggerHandler
-
-    TriggerHandler.clearBypass('AccountTriggerHandler');
-
-    acc.Name = 'With Trigger';
-    update acc; // will invoke the AccountTriggerHandler
-
-  }
-
-}
-```
-
-If you need to check if a handler is bypassed, use the `isBypassed` method:
-
-```java
-if (TriggerHandler.isBypassed('AccountTriggerHandler')) {
-  // ... do something if the Account trigger handler is bypassed!
-}
-```
-
-If you want to clear all bypasses for the transaction, simple use the `clearAllBypasses` method, as in:
-
-```java
-// ... done with bypasses!
-
-TriggerHandler.clearAllBypasses();
-
-// ... now handlers won't be ignored!
-```
-
-## Overridable Methods
-
-Here are all of the methods that you can override. All of the context possibilities are supported.
-
-* `beforeInsert()`
-* `beforeUpdate()`
-* `beforeDelete()`
-* `afterInsert()`
-* `afterUpdate()`
-* `afterDelete()`
-* `afterUndelete()`
+https://www.apexhours.com/apex-code-best-practices/

@@ -10,7 +10,7 @@
 
 More Info: https://trailhead.salesforce.com/content/learn/modules/success-cloud-coding-conventions/implement-frameworks-sc 
 
-SFDX-Trigger-Framework:  https://github.com/rsoesemann/apex-unified-logging
+SFDX-Unified-Logging-Framework:  https://github.com/rsoesemann/apex-unified-logging
 
 *******************************************************************************************/
 /* MODIFICATION LOG
